@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  username     String?    @db.VarChar(100)
+  avatar       String?    @db.VarChar(500)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  clothing     Clothing[]
+  rooms        Room[]
+
+  @@map("users")
+}
+
+model Room {
+  id           String     @id @default(uuid())
+  userId       String     @map("user_id")
+  name         String     @db.VarChar(100)
+  icon         String?    @db.VarChar(50)
+  displayOrder Int        @default(0) @map("display_order")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clothing     Clothing[]
+
+  @@map("rooms")
+}
+
+model Season {
+  id           String            @id @default(uuid())
+  name         String            @db.VarChar(50)
+  icon         String?           @db.VarChar(50)
+  displayOrder Int               @default(0) @map("display_order")
+
+  clothingSeasons ClothingSeason[]
+
+  @@map("seasons")
+}
+
+model Clothing {
+  id           String     @id @default(uuid())
+  userId       String     @map("user_id")
+  name         String     @db.VarChar(200)
+  description  String?    @db.Text
+  color        String?    @db.VarChar(50)
+  size         String?    @db.VarChar(20)
+  brand        String?    @db.VarChar(100)
+  purchaseDate DateTime?  @map("purchase_date") @db.Date
+  imageUrl     String?    @map("image_url") @db.VarChar(500)
+  roomId       String?    @map("room_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room         Room?      @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  seasons      ClothingSeason[]
+
+  @@map("clothing")
+}
+
+model ClothingSeason {
+  clothingId String   @map("clothing_id")
+  seasonId   String   @map("season_id")
+
+  clothing   Clothing @relation(fields: [clothingId], references: [id], onDelete: Cascade)
+  season     Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@id([clothingId, seasonId])
+  @@map("clothing_seasons")
+}
+
